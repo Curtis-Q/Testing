@@ -1,6 +1,7 @@
 import '../styles/globals.css'
 import Link from 'next/link'
 
+
 function Marketplace({ Component, pageProps }) {
   return (
     <div>
@@ -10,6 +11,11 @@ function Marketplace({ Component, pageProps }) {
           <Link href="/">
             <a className="mr-4 text-pink-500">
               Home
+            </a>
+          </Link>
+          <Link href="/contact">
+            <a className="mr-6 text-pink-500">
+              Contact
             </a>
           </Link>
           <Link href="/create-item">

@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import Web3Modal from "web3modal"
 import Image from 'next/image'
+import { TwitterShareButton, TwitterIcon, } from 'next-share'
+
 
 import {
   nftaddress, nftmarketaddress
@@ -55,6 +57,9 @@ export default function Home() {
     await transaction.wait()
     loadNFTs()
   }
+
+  
+
   if (loadingState === 'loaded' && !nfts.length) return (<h1 className="px-20 py-10 text-3xl">No items in marketplace</h1>)
   return (
     <div className="flex justify-center">
@@ -63,6 +68,15 @@ export default function Home() {
           {
             nfts.map((nft, i) => (
               <div key={i} className="border shadow rounded-xl overflow-hidden">
+                
+              <div class="text-right ">
+                <TwitterShareButton
+                  url={nft.image}
+                  title={'Check out this content!'}>
+                  <TwitterIcon size={32} round />                
+                </TwitterShareButton>              
+              </div>                 
+
                 <Image 
                   src={nft.image}
                   width={500}
