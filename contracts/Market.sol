@@ -14,6 +14,7 @@ contract NFTMarket is ReentrancyGuard {
 
   address payable owner;
   uint256 listingPrice = 0.025 ether;
+  uint256 shareReward = 0.001 ether;                        // Can use a general amount
 
   constructor() {
     owner = payable(msg.sender);
@@ -22,10 +23,12 @@ contract NFTMarket is ReentrancyGuard {
   struct MarketItem {
     uint itemId;
     address nftContract;
-    uint256 tokenId;
     address payable seller;
     address payable owner;
+    uint256 tokenId;
     uint256 price;
+    uint256 sharePrice;
+    uint256 shareCount;
     bool sold;
   }
 
@@ -34,10 +37,12 @@ contract NFTMarket is ReentrancyGuard {
   event MarketItemCreated (
     uint indexed itemId,
     address indexed nftContract,
-    uint256 indexed tokenId,
     address seller,
     address owner,
+    uint256 indexed tokenId,
     uint256 price,
+    uint256 sharePrice,
+    uint256 shareCount,
     bool sold
   );
 
@@ -50,7 +55,8 @@ contract NFTMarket is ReentrancyGuard {
   function createMarketItem(
     address nftContract,
     uint256 tokenId,
-    uint256 price
+    uint256 price,
+    uint256 sharePrice
   ) public payable nonReentrant {
     require(price > 0, "Price must be at least 1 wei");
     require(msg.value == listingPrice, "Price must be equal to listing price");
@@ -61,10 +67,12 @@ contract NFTMarket is ReentrancyGuard {
     idToMarketItem[itemId] =  MarketItem(
       itemId,
       nftContract,
-      tokenId,
       payable(msg.sender),
       payable(address(0)),
+      tokenId,
       price,
+      sharePrice,
+      0,
       false
     );
 
@@ -73,12 +81,27 @@ contract NFTMarket is ReentrancyGuard {
     emit MarketItemCreated(
       itemId,
       nftContract,
-      tokenId,
       msg.sender,
       address(0),
+      tokenId,
       price,
+      sharePrice,
+      0,
       false
     );
+  }
+
+    /* Transfers ether to sharer from owner */
+  function shareNFT(
+    // Address of sharer
+    address shareId,
+    uint256 itemId
+    ) public {
+    uint reward = idToMarketItem[itemId].sharePrice; 
+    idToMarketItem[itemId].shareCount++; 
+
+    // Transfer the reward to the sharer
+    payable(shareId).transfer(reward);
   }
 
   /* Creates the sale of a marketplace item */
@@ -91,11 +114,20 @@ contract NFTMarket is ReentrancyGuard {
     uint tokenId = idToMarketItem[itemId].tokenId;
     require(msg.value == price, "Please submit the asking price in order to complete the purchase");
 
+    // Transfer the amount from the buyer to seller
     idToMarketItem[itemId].seller.transfer(msg.value);
+
+    // Transfer the token to the buyer (msg.sender)
     IERC721(nftContract).transferFrom(address(this), msg.sender, tokenId);
+
+    // Change the ownership address
     idToMarketItem[itemId].owner = payable(msg.sender);
+
+    // Change status to sold
     idToMarketItem[itemId].sold = true;
+
     _itemsSold.increment();
+
     payable(owner).transfer(listingPrice);
   }
 
